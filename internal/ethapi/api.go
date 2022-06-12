@@ -2497,12 +2497,26 @@ func NewPrivateTxBundleAPI(b Backend) *PrivateTxBundleAPI {
 	return &PrivateTxBundleAPI{b}
 }
 
+type SendBundleArgs struct {
+	Txs               []hexutil.Bytes `json:"txs"`
+	BlockNumber       rpc.BlockNumber `json:"blockNumber"`
+	MinTimestamp      *uint64         `json:"minTimestamp"`
+	MaxTimestamp      *uint64         `json:"maxTimestamp"`
+	RevertingTxHashes []common.Hash   `json:"revertingTxHashes"`
+}
+
 // SendBundle will add the signed transaction to the transaction pool.
 // The sender is responsible for signing the transaction and using the correct nonce and ensuring validity
-func (s *PrivateTxBundleAPI) SendBundle(ctx context.Context, encodedTxs []hexutil.Bytes, blockNumber rpc.BlockNumber, minTimestampPtr, maxTimestampPtr *uint64) error {
+func (s *PrivateTxBundleAPI) SendBundle(ctx context.Context, args SendBundleArgs) error {
 	var txs types.Transactions
+	if len(args.Txs) == 0 {
+		return errors.New("bundle missing txs")
+	}
+	if args.BlockNumber == 0 {
+		return errors.New("bundle missing blockNumber")
+	}
 
-	for _, encodedTx := range encodedTxs {
+	for _, encodedTx := range args.Txs {
 		tx := new(types.Transaction)
 		if err := rlp.DecodeBytes(encodedTx, tx); err != nil {
 			return err
@@ -2511,14 +2525,14 @@ func (s *PrivateTxBundleAPI) SendBundle(ctx context.Context, encodedTxs []hexuti
 	}
 
 	var minTimestamp, maxTimestamp uint64
-	if minTimestampPtr != nil {
-		minTimestamp = *minTimestampPtr
+	if args.MinTimestamp != nil {
+		minTimestamp = *args.MinTimestamp
 	}
-	if maxTimestampPtr != nil {
-		maxTimestamp = *maxTimestampPtr
+	if args.MaxTimestamp != nil {
+		maxTimestamp = *args.MaxTimestamp
 	}
 
-	return s.b.SendBundle(ctx, txs, blockNumber, minTimestamp, maxTimestamp)
+	return s.b.SendBundle(ctx, txs, args.BlockNumber, minTimestamp, maxTimestamp, args.RevertingTxHashes)
 }
 
 // ---------------------------------------------------------------- FlashBots ----------------------------------------------------------------
