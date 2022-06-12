@@ -139,6 +139,7 @@ var (
 		utils.MinerRecommitIntervalFlag,
 		utils.MinerDelayLeftoverFlag,
 		utils.MinerNoVerfiyFlag,
+		utils.MinerMaxMergedBundles,
 		utils.NATFlag,
 		utils.NoDiscoverFlag,
 		utils.DiscoveryV5Flag,
